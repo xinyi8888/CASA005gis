@@ -1,0 +1,57 @@
+---
+title: "week4_homework"
+output: html_document
+date: "2022-11-02"
+---
+```{r}
+install.packages('countrycode')
+library(countrycode)
+library(dplyr)
+library(readr)
+library(tidyverse)
+library(terra)
+library(janitor)
+library(here)
+library(sf)
+library(tmap)
+library(tmaptools)
+```
+```{r}
+genderinequality <- read.csv("HDR21-22_Composite_indices_complete_time_series.csv",na = "NA")
+
+```
+
+
+```{r}
+Map <- st_read(here::here('World_Countries_(Generalized)','World_Countries__Generalized_.shp'))
+```
+```{r}
+genderinequality <- genderinequality %>%
+  clean_names() %>%
+  dplyr::select(contains("iso3"),
+                contains("country"), 
+                contains("gii_2010"),
+                contains("gii_2019"))%>%
+  slice(1:195) %>%
+  na.omit()%>%
+  mutate(., gii_diff=(gii_2019-gii_2010)) 
+genderinequality
+```
+
+```{r}
+genderinequality$iso = countrycode(genderinequality$iso3,"iso3c","iso2c")
+```
+
+```{r}
+joined_genderinequality <- Map %>% 
+  clean_names() %>%
+  left_join(., 
+            genderinequality,
+            by = c("iso" = "iso"))
+
+```
+
+```{r}
+tmap_mode("plot")
+qtm(joined_genderinequality,fill = "gii_diff")
+```
